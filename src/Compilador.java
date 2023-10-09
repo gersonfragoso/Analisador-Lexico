@@ -1,4 +1,7 @@
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,13 +18,14 @@ public class Compilador { //criando o compilador
     public List<Token> tokens;
     public Map<String,TokenType> gramatica;
 
-    public Compilador(String entrada){
+    public Compilador(String entrada) {
         this.entrada = entrada;
         this.colunaAtual = 1;
         this.posicaoAtual = 0;
         this.linhaAtual = 1;
+        this.tokens = new ArrayList<>(); // Adicione esta linha
     }
-    private void inicializarPalavrasReservadas() {
+    public void inicializarPalavrasReservadas() {
         gramatica = new HashMap<>();
         gramatica.put("INTEIRO", TokenType.INTEIRO);
         gramatica.put("REAL", TokenType.REAL);
@@ -160,5 +164,43 @@ public class Compilador { //criando o compilador
     private void adicionarToken(TokenType tipo, String valor) {
         tokens.add(new Token(tipo, valor, linhaAtual, colunaAtual - valor.length()));
     }
+    class Token {
+        private TokenType tipo;
+        private String valor;
+        private int linha;
+        private int coluna;
 
+        public Token(TokenType tipo, String valor, int linha, int coluna) {
+            this.tipo = tipo;
+            this.valor = valor;
+            this.linha = linha;
+            this.coluna = coluna;
+        }
+
+        public TokenType getTipo() {
+            return tipo;
+        }
+
+        public String getValor() {
+            return valor;
+        }
+
+        public int getLinha() {
+            return linha;
+        }
+
+        public int getColuna() {
+            return coluna;
+        }
+
+        @Override
+        public String toString() {
+            return "Token{" +
+                    "tipo=" + tipo +
+                    ", valor='" + valor + '\'' +
+                    ", linha=" + linha +
+                    ", coluna=" + coluna +
+                    '}';
+        }
+    }
 }
