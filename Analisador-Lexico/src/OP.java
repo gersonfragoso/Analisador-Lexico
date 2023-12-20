@@ -1,0 +1,5 @@
+
+
+enum OP {
+    SOMA, MENOS, MULTIPLICACAO, DIVISAO, AND
+}
