@@ -11,7 +11,6 @@ public class Lexer {
 
     private final HashMap<String, TokenType> palavrasReservadas = new HashMap<>();
     private final HashMap<String, OP> operadoresAditivosEMultiplicativos = new HashMap<>();
-    private final HashMap<String, OP> Delimitadores = new HashMap<>();
 
 
     {
@@ -55,8 +54,6 @@ public class Lexer {
         this.tokens = new ArrayList<>();
     }
 
-    // Método para identificar todos os tipos de tokens
-    // Método para identificar todos os tipos de tokens
     public ArrayList<Token> tokenize() {
         while (posicao < entrada.length()) {
             char currentChar = entrada.charAt(posicao);
@@ -123,7 +120,7 @@ public class Lexer {
     }
 
 
-    // Chama o método que identifica os tokens
+    // parse dos operadores
     private void operadorParse() {
         char currentChar = entrada.charAt(posicao);
         String operator = String.valueOf(currentChar);
@@ -184,13 +181,13 @@ public class Lexer {
             addErrorToken("Número inválido: " + numberStr);
         }
     }
-
+    //parser para identificar se é uma palvra reservada ou um identificador
+    //porem primeiro ele junta a string para depois verificar
     private void identificarParser() {
         StringBuilder identifier = new StringBuilder();
 
         while (posicao < entrada.length()) {
             char currentChar = entrada.charAt(posicao);
-            // Verifica se o caractere é uma letra, dígito ou sublinhado.
             if (Character.isLetterOrDigit(currentChar) || currentChar == '_') {
                 identifier.append(currentChar);
                 posicao++;
@@ -207,7 +204,7 @@ public class Lexer {
             // É uma palavra reservada
             addToken(tokenType, identifierStr);
         } else {
-            // Não é uma palavra reservada, é um identificador
+            //é um identificador
             addToken(TokenType.IDENTIFICADOR, identifierStr);
         }
     }
