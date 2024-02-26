@@ -1,12 +1,9 @@
-
-
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class Scanner {
+public class Main {
     public static void main(String[] args) {
         try {
             String filePath = "src/gramatica.txt";
@@ -17,6 +14,7 @@ public class Scanner {
                 input.append(line).append('\n');
             }
             reader.close();
+
             Lexer lexer = new Lexer(input.toString());
             ArrayList<Token> tokens = lexer.tokenize();
 
@@ -28,6 +26,11 @@ public class Scanner {
                 System.out.println(String.format("%-20s %-20s %-10s",
                         token.getValue(), token.getType(), token.getLine()));
             }
+
+            Parser parser = new Parser(tokens);
+            parser.parse();
+
+            System.out.println("\nAnálise sintática concluída com sucesso.");
 
         } catch (IOException e) {
             System.err.println("Erro ao ler o arquivo: " + e.getMessage());

@@ -21,12 +21,13 @@ public class Token {
         return value;
     }
 
+
     public int getLine() {
         return line;
     }
 
     public int getColumn() {
-        return column;
+        return column ;
     }
     public String toString() {
         if (type == TokenType.ERROR) {

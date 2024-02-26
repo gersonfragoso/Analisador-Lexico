@@ -16,7 +16,6 @@ public enum TokenType {
     NOT,
     ATRIBUICAO,
     ERROR,
-    CADEIA,
     IGUAL,
     MENOR,
     MAIOR,
@@ -28,5 +27,9 @@ public enum TokenType {
     MENOS,
     MULTIPLICACAO,
     DIVISAO,
-    IDENTIFICADOR;
+    IDENTIFICADOR,
+    TRUE,
+    FALSE,
+    AND,
+    OR, FOR, TO, COMENTARIO;
 }

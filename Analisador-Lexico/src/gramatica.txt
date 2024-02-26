@@ -1,8 +1,22 @@
-program teste; {programa exemplo}
+program Test4;
 var
-valor1: integer;
-valor2: real;
+   A, B, R, I : integer;
+
+procedure teste (A:integer, B:real);
+var
+   S,X: real;
 begin
-valor1 := 10;
-valor2 := 2.4;
+   S := A + B * X
+end  {verifique se é necessário um ";" no fechamento de um procedimento}
+
+begin
+   while (I <= 5) do
+   begin
+      A := A+1;
+      B := B-1;
+      R := A + B;
+      I := I + 1
+   end
 end.
+
+{retirar algumas palavras reservadas para gerar erros sintáticos}

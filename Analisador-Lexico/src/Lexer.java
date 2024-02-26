@@ -1,4 +1,3 @@
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -11,8 +10,6 @@ public class Lexer {
 
     private final HashMap<String, TokenType> palavrasReservadas = new HashMap<>();
     private final HashMap<String, OP> operadoresAditivosEMultiplicativos = new HashMap<>();
-    private final HashMap<String, OP> Delimitadores = new HashMap<>();
-
 
     {
         // Palavras reservadas
@@ -28,6 +25,8 @@ public class Lexer {
         palavrasReservadas.put("then", TokenType.THEN);
         palavrasReservadas.put("else", TokenType.ELSE);
         palavrasReservadas.put("while", TokenType.WHILE);
+        palavrasReservadas.put("for", TokenType.FOR);
+        palavrasReservadas.put("to", TokenType.TO);
         palavrasReservadas.put("do", TokenType.DO);
         palavrasReservadas.put("not", TokenType.NOT);
         palavrasReservadas.put(":=", TokenType.ATRIBUICAO);
@@ -44,6 +43,7 @@ public class Lexer {
         operadoresAditivosEMultiplicativos.put("-", OP.MENOS);
         operadoresAditivosEMultiplicativos.put("*", OP.MULTIPLICACAO);
         operadoresAditivosEMultiplicativos.put("and", OP.AND);
+        operadoresAditivosEMultiplicativos.put("or", OP.OR);
         operadoresAditivosEMultiplicativos.put("/", OP.DIVISAO);
     }
 
@@ -51,12 +51,10 @@ public class Lexer {
         this.entrada = input;
         this.posicao = 0;
         this.linha = 1;
-        this.colunas = 1;
+        this.colunas = 0;
         this.tokens = new ArrayList<>();
     }
 
-    // Método para identificar todos os tipos de tokens
-    // Método para identificar todos os tipos de tokens
     public ArrayList<Token> tokenize() {
         while (posicao < entrada.length()) {
             char currentChar = entrada.charAt(posicao);
@@ -68,40 +66,41 @@ public class Lexer {
                 operadorParse();
             } else if (currentChar == ':') {
                 if (posicao + 1 < entrada.length() && entrada.charAt(posicao + 1) == '=') {
-                    addToken(TokenType.ATRIBUICAO, String.valueOf(":="));
+                    addToken(TokenType.ATRIBUICAO, ":=");
                     posicao += 2;
                     colunas += 2;
                 } else {
-                    addToken(TokenType.DELIMITADOR, String.valueOf(currentChar));
+                    addToken(TokenType.DELIMITADOR, ":");
                     posicao++;
                     colunas++;
                 }
             } else if (currentChar == '>') {
                 if (posicao + 1 < entrada.length() && entrada.charAt(posicao + 1) == '=') {
-                    addToken(TokenType.MAIOR_OU_IGUAL);
+                    addToken(TokenType.MAIOR_OU_IGUAL, ">=");
                     posicao += 2;
                     colunas += 2;
                 } else {
-                    addToken(TokenType.MAIOR);
+                    addToken(TokenType.MAIOR, ">");
                     posicao++;
                     colunas++;
                 }
             } else if (currentChar == '<') {
                 if (posicao + 1 < entrada.length() && entrada.charAt(posicao + 1) == '=') {
-                    addToken(TokenType.MENOR_OU_IGUAL);
+                    addToken(TokenType.MENOR_OU_IGUAL, "<=");
                     posicao += 2;
                     colunas += 2;
-                } else if (currentChar == '>') {
-                    addToken(TokenType.DIFERENTE);
+                } else if (entrada.charAt(posicao + 1) == '>') {
+                    addToken(TokenType.DIFERENTE, "<>");
                     posicao += 2;
                     colunas += 2;
                 } else {
-                    addToken(TokenType.MENOR);
+                    addToken(TokenType.MENOR, "<");
                     posicao++;
                     colunas++;
                 }
-            } else if (currentChar == '(' || currentChar == ')' || currentChar == ';' || currentChar == ',' || currentChar == '.') {
-                addToken(TokenType.DELIMITADOR, String.valueOf(currentChar)); // Ajuste aqui
+            } else if (currentChar == '(' || currentChar == ')' || currentChar == ';' || currentChar == ','
+                    || currentChar == '.') {
+                addToken(TokenType.DELIMITADOR, String.valueOf(currentChar));
                 posicao++;
                 colunas++;
             } else if (currentChar == ' ' || currentChar == '\t') {
@@ -114,7 +113,7 @@ public class Lexer {
             } else if (currentChar == '{') {
                 pularComentario();
             } else {
-                addErrorToken("Caractere inválido '" + currentChar + "'.");
+                addErrorToken("Caractere inválido " + currentChar + ".");
                 posicao++;
                 colunas++;
             }
@@ -122,15 +121,17 @@ public class Lexer {
         return tokens;
     }
 
-
-    // Chama o método que identifica os tokens
     private void operadorParse() {
         char currentChar = entrada.charAt(posicao);
-        String operator = String.valueOf(currentChar);
 
-        OP op = operadoresAditivosEMultiplicativos.get(operator);
+        OP op = operadoresAditivosEMultiplicativos.get(String.valueOf(currentChar));
         if (op != null) {
             addToken(getTipoDoTokenParse(op));
+            posicao++;
+            colunas++;
+        } else if (currentChar == '&' || currentChar == '|') {
+            TokenType tipoToken = currentChar == '&' ? TokenType.AND : TokenType.OR;
+            addToken(tipoToken);
             posicao++;
             colunas++;
         } else {
@@ -140,23 +141,21 @@ public class Lexer {
         }
     }
 
-    // Identificando as operações
     private TokenType getTipoDoTokenParse(OP op) {
         switch (op) {
             case SOMA:
-                return TokenType.SOMA;
+                return (TokenType.SOMA);
             case MENOS:
-                return TokenType.MENOS;
+                return (TokenType.MENOS);
             case MULTIPLICACAO:
-                return TokenType.MULTIPLICACAO;
+                return (TokenType.MULTIPLICACAO);
             case DIVISAO:
-                return TokenType.DIVISAO;
+                return (TokenType.DIVISAO);
             default:
-                return TokenType.ERROR;
+                return (TokenType.ERROR);
         }
     }
 
-    // Identificando número
     private void parseNumber() {
         StringBuilder number = new StringBuilder();
 
@@ -175,11 +174,7 @@ public class Lexer {
         String numberStr = number.toString();
 
         if (verificarNumeroValido(numberStr)) {
-            if (numberStr.contains(".")) {
-                addToken(TokenType.DECIMAL, numberStr);
-            } else {
-                addToken(TokenType.INTEIRO, numberStr);
-            }
+            addToken(numberStr.contains(".") ? TokenType.DECIMAL : TokenType.INTEIRO, numberStr);
         } else {
             addErrorToken("Número inválido: " + numberStr);
         }
@@ -190,7 +185,6 @@ public class Lexer {
 
         while (posicao < entrada.length()) {
             char currentChar = entrada.charAt(posicao);
-            // Verifica se o caractere é uma letra, dígito ou sublinhado.
             if (Character.isLetterOrDigit(currentChar) || currentChar == '_') {
                 identifier.append(currentChar);
                 posicao++;
@@ -204,23 +198,20 @@ public class Lexer {
 
         TokenType tokenType = palavrasReservadas.get(identifierStr);
         if (tokenType != null) {
-            // É uma palavra reservada
             addToken(tokenType, identifierStr);
+        } else if (identifierStr.equals("null")) {
+            addToken(TokenType.IDENTIFICADOR, identifierStr);
         } else {
-            // Não é uma palavra reservada, é um identificador
             addToken(TokenType.IDENTIFICADOR, identifierStr);
         }
     }
 
-
-    // Pular o comentário
     private void pularComentario() {
         while (posicao < entrada.length() && entrada.charAt(posicao) != '\n' && entrada.charAt(posicao) != '\r') {
             posicao++;
         }
     }
 
-    // Verificando números válidos
     private boolean verificarNumeroValido(String number) {
         if (!number.matches(".*\\d+.*")) {
             return false;
@@ -237,7 +228,6 @@ public class Lexer {
         return number.matches("[+-]?[0-9]*\\.?[0-9]+");
     }
 
-    // Adicionando os tokens
     private void addToken(TokenType type) {
         Token token = new Token(type, null, linha, colunas);
         tokens.add(token);
@@ -247,9 +237,9 @@ public class Lexer {
         Token token = new Token(type, value, linha, colunas);
         tokens.add(token);
     }
+
     private void addErrorToken(String message) {
         Token errorToken = new Token(TokenType.ERROR, message, linha, colunas);
         tokens.add(errorToken);
     }
-
 }
