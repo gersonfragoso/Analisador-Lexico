@@ -1,39 +1,55 @@
-
+import java.util.regex.Matcher;
 
 public class Token {
-    private TokenType type;
-    private String value;
-    private int line;
-    private int column;
+    private final String token;
+    private final String classification;
+    private final int line;
 
-    public Token(TokenType type, String value, int line, int column) {
-        this.type = type;
-        this.value = value;
+    public Token(String token, String classification, int line) {
+        this.token = token;
+        this.classification = classification;
         this.line = line;
-        this.column = column;
     }
 
-    public TokenType getType() {
-        return type;
+    public String getToken() {
+        return this.token;
     }
 
-    public String getValue() {
-        return value;
+    public String getClassification() {
+        return this.classification;
     }
-
 
     public int getLine() {
-        return line;
+        return this.line;
     }
 
-    public int getColumn() {
-        return column ;
-    }
-    public String toString() {
-        if (type == TokenType.ERROR) {
-            return "Erro léxico na linha " + line + ", coluna " + column + ": " + value;
+    public static String getTokenClassification(Matcher matcher) {
+        if (matcher.group("COMMENT") != null) {
+            return "COMMENT";
+        } else if (matcher.group("KEYWORD") != null) {
+            return "KEYWORD";
+        } else if (matcher.group("BOOLEAN") != null) {
+            return "BOOLEAN";
+        } else if (matcher.group("REAL") != null) {
+            return "REAL";
+        } else if (matcher.group("INTEGER") != null) {
+            return "INTEGER";
+        } else if (matcher.group("ASSIGNMENT") != null) {
+            return "ASSIGNMENT";
+        } else if (matcher.group("RELATIONAL") != null) {
+            return "RELATIONAL";
+        } else if (matcher.group("ADDITIVE") != null) {
+            return "ADDITIVE";
+        } else if (matcher.group("MULTIPLICATION") != null) {
+            return "MULTIPLICATION";
+        } else if (matcher.group("IDENTIFIER") != null) {
+            return "IDENTIFIER";
+        } else if (matcher.group("DELIMITER") != null) {
+            return "DELIMITER";
+        } else if (matcher.group("ERROR") != null) {
+            return "ERROR";
+        } else {
+            return "";
         }
-        return type + (value != null ? "('" + value + "')" : "") + " na linha " + line + ", coluna " + column;
     }
 }
-

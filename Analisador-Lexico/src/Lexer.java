@@ -1,245 +1,117 @@
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Lexer {
-    private final String entrada;
-    private int posicao;
-    private int linha;
-    private int colunas;
-    private final ArrayList<Token> tokens;
 
-    private final HashMap<String, TokenType> palavrasReservadas = new HashMap<>();
-    private final HashMap<String, OP> operadoresAditivosEMultiplicativos = new HashMap<>();
-
-    {
-        // Palavras reservadas
-        palavrasReservadas.put("program", TokenType.PROGRAMA);
-        palavrasReservadas.put("var", TokenType.VARIAVEL);
-        palavrasReservadas.put("integer", TokenType.INTEIRO);
-        palavrasReservadas.put("real", TokenType.DECIMAL);
-        palavrasReservadas.put("boolean", TokenType.BOOLEAN);
-        palavrasReservadas.put("procedure", TokenType.PROCEDIMENTO);
-        palavrasReservadas.put("begin", TokenType.INICIO);
-        palavrasReservadas.put("end", TokenType.FIM);
-        palavrasReservadas.put("if", TokenType.IF);
-        palavrasReservadas.put("then", TokenType.THEN);
-        palavrasReservadas.put("else", TokenType.ELSE);
-        palavrasReservadas.put("while", TokenType.WHILE);
-        palavrasReservadas.put("for", TokenType.FOR);
-        palavrasReservadas.put("to", TokenType.TO);
-        palavrasReservadas.put("do", TokenType.DO);
-        palavrasReservadas.put("not", TokenType.NOT);
-        palavrasReservadas.put(":=", TokenType.ATRIBUICAO);
-        palavrasReservadas.put("error", TokenType.ERROR);
-        // Operadores Relacionais
-        palavrasReservadas.put("=", TokenType.IGUAL);
-        palavrasReservadas.put("<", TokenType.MENOR);
-        palavrasReservadas.put(">", TokenType.MAIOR);
-        palavrasReservadas.put("<=", TokenType.MENOR_OU_IGUAL);
-        palavrasReservadas.put(">=", TokenType.MAIOR_OU_IGUAL);
-        palavrasReservadas.put("<>", TokenType.DIFERENTE);
-        // Operadores
-        operadoresAditivosEMultiplicativos.put("+", OP.SOMA);
-        operadoresAditivosEMultiplicativos.put("-", OP.MENOS);
-        operadoresAditivosEMultiplicativos.put("*", OP.MULTIPLICACAO);
-        operadoresAditivosEMultiplicativos.put("and", OP.AND);
-        operadoresAditivosEMultiplicativos.put("or", OP.OR);
-        operadoresAditivosEMultiplicativos.put("/", OP.DIVISAO);
-    }
-
-    public Lexer(String input) {
-        this.entrada = input;
-        this.posicao = 0;
-        this.linha = 1;
-        this.colunas = 0;
-        this.tokens = new ArrayList<>();
-    }
-
-    public ArrayList<Token> tokenize() {
-        while (posicao < entrada.length()) {
-            char currentChar = entrada.charAt(posicao);
-            if (Character.isLetter(currentChar) || currentChar == '_') {
-                identificarParser();
-            } else if (Character.isDigit(currentChar)) {
-                parseNumber();
-            } else if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/') {
-                operadorParse();
-            } else if (currentChar == ':') {
-                if (posicao + 1 < entrada.length() && entrada.charAt(posicao + 1) == '=') {
-                    addToken(TokenType.ATRIBUICAO, ":=");
-                    posicao += 2;
-                    colunas += 2;
-                } else {
-                    addToken(TokenType.DELIMITADOR, ":");
-                    posicao++;
-                    colunas++;
-                }
-            } else if (currentChar == '>') {
-                if (posicao + 1 < entrada.length() && entrada.charAt(posicao + 1) == '=') {
-                    addToken(TokenType.MAIOR_OU_IGUAL, ">=");
-                    posicao += 2;
-                    colunas += 2;
-                } else {
-                    addToken(TokenType.MAIOR, ">");
-                    posicao++;
-                    colunas++;
-                }
-            } else if (currentChar == '<') {
-                if (posicao + 1 < entrada.length() && entrada.charAt(posicao + 1) == '=') {
-                    addToken(TokenType.MENOR_OU_IGUAL, "<=");
-                    posicao += 2;
-                    colunas += 2;
-                } else if (entrada.charAt(posicao + 1) == '>') {
-                    addToken(TokenType.DIFERENTE, "<>");
-                    posicao += 2;
-                    colunas += 2;
-                } else {
-                    addToken(TokenType.MENOR, "<");
-                    posicao++;
-                    colunas++;
-                }
-            } else if (currentChar == '(' || currentChar == ')' || currentChar == ';' || currentChar == ','
-                    || currentChar == '.') {
-                addToken(TokenType.DELIMITADOR, String.valueOf(currentChar));
-                posicao++;
-                colunas++;
-            } else if (currentChar == ' ' || currentChar == '\t') {
-                posicao++;
-                colunas++;
-            } else if (currentChar == '\n' || currentChar == '\r') {
-                posicao++;
-                colunas = 1;
-                linha++;
-            } else if (currentChar == '{') {
-                pularComentario();
-            } else {
-                addErrorToken("Caractere inválido " + currentChar + ".");
-                posicao++;
-                colunas++;
-            }
+    public static void errorMsg(String errorType, String errorToken, int errorLine) {
+        if (errorType.equals("ERROR")) {
+            System.out.println("ERROR: " + errorType + " " + errorToken + " IN LINE " + errorLine);
+        } else {
+            System.out.println("ERROR: " + errorType + " BUT NOT CLOSED IN LINE " + errorLine);
         }
+    }
+
+    private static Pattern buildRegex() {
+        String regexPattern =
+                "(?<COMMENT>\\/\\*.*?\\*\\/)|"
+                        + "(?<KEYWORD>\\b(program|var|integer|real|boolean|procedure|begin|end|if|then|else|while|do|not)\\b)|"
+                        + "(?<BOOLEAN>\\b(true|false)\\b)|"
+                        + "(?<REAL>\\b\\d+\\.\\d*)|"
+                        + "(?<INTEGER>\\b\\d+)|"
+                        + "(?<ASSIGNMENT>:=)|"
+                        + "(?<RELATIONAL><=|>=|<>|>|<|=)|"
+                        + "(?<ADDITIVE>\\+|-|\\bor\\b)|"
+                        + "(?<MULTIPLICATION>\\*|\\/|\\band\\b)|"
+                        + "(?<IDENTIFIER>[a-zA-Z][a-zA-Z0-9_]*\\b)|"
+                        + "(?<DELIMITER>[;.:(,),])|"
+                        + "(?<ERROR>[^A-Za-z0-9=<>:;_+\\-*/{}\\t\\s.])";
+
+        return Pattern.compile(regexPattern);
+    }
+
+    public static List<Token> match(String dataInput) {
+        // Construir regex para ser usada no loop de correspondência
+        Pattern regex = buildRegex();
+
+        // Lista de tokens e classificações
+        List<Token> tokens = new ArrayList<>();
+
+        // Tokens que não serão incluídos no resultado
+        String[] nonListableTokens = {"ERROR", "COMMENT"};
+
+        // Linha usada no analisador léxico
+        int line = 1; // Inicia com 1 para contar a primeira linha
+
+        // Para cada correspondência de objeto em uma iteração de encontrar dentro dos dados do arquivo
+        Matcher matcher = regex.matcher(dataInput);
+        int startIndex = 0;
+        while (matcher.find()) {
+            line += countOccurrences(dataInput.substring(startIndex, matcher.start()), '\n');
+            startIndex = matcher.end();
+            // Obtém o token e sua classificação
+            String token = "";
+            String classification = "";
+
+            if (isCommentDelimitedByCurlyBraces(dataInput, matcher.start())) {
+                continue; // Ignora comentários delimitados por {}
+            }
+
+            // Verifica se o token é um comentário ou erro
+            for (String tokenType : nonListableTokens) {
+                if (matcher.group(tokenType) != null) {
+                    classification = tokenType;
+                    if (tokenType.equals("ERROR")) {
+                        errorMsg(tokenType, matcher.group(tokenType), line);
+                    }
+                }
+            }
+
+            // Se não for um comentário ou erro, obtemos o token e sua classificação
+            if (classification.isEmpty()) {
+                for (int i = 1; i <= matcher.groupCount(); i++) {
+                    if (matcher.group(i) != null) {
+                        token = matcher.group(i);
+                        classification = Token.getTokenClassification(matcher);
+
+                        break;
+                    }
+                }
+            }
+
+            // Adiciona o token à lista
+            tokens.add(new Token(token, classification, line));
+
+        }
+
+        // Retorna os tokens, classificações e linha
         return tokens;
     }
 
-    private void operadorParse() {
-        char currentChar = entrada.charAt(posicao);
-
-        OP op = operadoresAditivosEMultiplicativos.get(String.valueOf(currentChar));
-        if (op != null) {
-            addToken(getTipoDoTokenParse(op));
-            posicao++;
-            colunas++;
-        } else if (currentChar == '&' || currentChar == '|') {
-            TokenType tipoToken = currentChar == '&' ? TokenType.AND : TokenType.OR;
-            addToken(tipoToken);
-            posicao++;
-            colunas++;
-        } else {
-            addErrorToken("Caractere inválido '" + currentChar + "'.");
-            posicao++;
-            colunas++;
-        }
-    }
-
-    private TokenType getTipoDoTokenParse(OP op) {
-        switch (op) {
-            case SOMA:
-                return (TokenType.SOMA);
-            case MENOS:
-                return (TokenType.MENOS);
-            case MULTIPLICACAO:
-                return (TokenType.MULTIPLICACAO);
-            case DIVISAO:
-                return (TokenType.DIVISAO);
-            default:
-                return (TokenType.ERROR);
-        }
-    }
-
-    private void parseNumber() {
-        StringBuilder number = new StringBuilder();
-
-        while (posicao < entrada.length()) {
-            char currentChar = entrada.charAt(posicao);
-
-            if (Character.isDigit(currentChar) || currentChar == '.') {
-                number.append(currentChar);
-                posicao++;
-                colunas++;
-            } else {
-                break;
+    public static int countOccurrences(String str, char c) {
+        int count = 0;
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == c) {
+                count++;
             }
         }
-
-        String numberStr = number.toString();
-
-        if (verificarNumeroValido(numberStr)) {
-            addToken(numberStr.contains(".") ? TokenType.DECIMAL : TokenType.INTEIRO, numberStr);
-        } else {
-            addErrorToken("Número inválido: " + numberStr);
-        }
+        return count;
     }
-
-    private void identificarParser() {
-        StringBuilder identifier = new StringBuilder();
-
-        while (posicao < entrada.length()) {
-            char currentChar = entrada.charAt(posicao);
-            if (Character.isLetterOrDigit(currentChar) || currentChar == '_') {
-                identifier.append(currentChar);
-                posicao++;
-                colunas++;
-            } else {
-                break;
+    public static boolean isCommentDelimitedByCurlyBraces(String input, int startIndex) {
+        int openBracesCount = 0;
+        for (int i = startIndex - 1; i >= 0; i--) {
+            char currentChar = input.charAt(i);
+            if (currentChar == '}') {
+                openBracesCount++;
+            } else if (currentChar == '{') {
+                if (openBracesCount == 0) {
+                    return true; // Encontrou um comentário delimitado por {}
+                } else {
+                    openBracesCount--;
+                }
             }
         }
-
-        String identifierStr = identifier.toString();
-
-        TokenType tokenType = palavrasReservadas.get(identifierStr);
-        if (tokenType != null) {
-            addToken(tokenType, identifierStr);
-        } else if (identifierStr.equals("null")) {
-            addToken(TokenType.IDENTIFICADOR, identifierStr);
-        } else {
-            addToken(TokenType.IDENTIFICADOR, identifierStr);
-        }
-    }
-
-    private void pularComentario() {
-        while (posicao < entrada.length() && entrada.charAt(posicao) != '\n' && entrada.charAt(posicao) != '\r') {
-            posicao++;
-        }
-    }
-
-    private boolean verificarNumeroValido(String number) {
-        if (!number.matches(".*\\d+.*")) {
-            return false;
-        }
-
-        if (number.startsWith(".")) {
-            return false;
-        }
-
-        if (number.endsWith(".")) {
-            return false;
-        }
-
-        return number.matches("[+-]?[0-9]*\\.?[0-9]+");
-    }
-
-    private void addToken(TokenType type) {
-        Token token = new Token(type, null, linha, colunas);
-        tokens.add(token);
-    }
-
-    private void addToken(TokenType type, String value) {
-        Token token = new Token(type, value, linha, colunas);
-        tokens.add(token);
-    }
-
-    private void addErrorToken(String message) {
-        Token errorToken = new Token(TokenType.ERROR, message, linha, colunas);
-        tokens.add(errorToken);
+        return false; // Não encontrou um comentário delimitado por {}
     }
 }

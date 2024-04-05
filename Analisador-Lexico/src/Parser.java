@@ -1,269 +1,297 @@
-import java.util.ArrayList;
+import java.util.List;
 
 public class Parser {
-    private final ArrayList<Token> tokens;
+    private final List<Token> tokens;
     private int currentTokenIndex;
 
-    public Parser(ArrayList<Token> tokens) {
+    public Parser(List<Token> tokens) {
         this.tokens = tokens;
         this.currentTokenIndex = 0;
     }
 
-    public void parse() {
-        programa();
-        if (!match(TokenType.DELIMITADOR, ".")) {
-            error("Esperado '.' no final do programa.");
-        }
-    }
-
-    private Token consume() {
-        return tokens.get(currentTokenIndex++);
-    }
-
-    private boolean match(TokenType type, String value) {
+    public void programa() {
         if (currentTokenIndex < tokens.size()) {
-            Token token = tokens.get(currentTokenIndex);
-            if (token.getType() == type && (value == null || token.getValue().equals(value))) {
+            if (tokens.get(currentTokenIndex).getToken().equals("program")) {
                 currentTokenIndex++;
-                return true;
+                if (tokens.get(currentTokenIndex).getClassification().equals("IDENTIFIER")) {
+                    currentTokenIndex++;
+                    if (tokens.get(currentTokenIndex).getToken().equals(";")) {
+                        currentTokenIndex++;
+                        declaracoes_variaveis();
+                        declaracoes_de_subprogramas();
+                        comando_composto();
+                        if (tokens.get(currentTokenIndex).getToken().equals(".")) {
+                            System.out.println("Programa analisado com sucesso!");
+                        } else {
+                            System.out.println("Esperado '.' no final do programa");
+                            System.out.print(tokens.get(currentTokenIndex).getLine() + " " + tokens.get(currentTokenIndex).getToken());
+                        }
+                    } else {
+                        System.out.println("Esperado ';' após o nome do programa");
+                        System.out.print(tokens.get(currentTokenIndex).getLine() + " " + tokens.get(currentTokenIndex).getToken());
+                    }
+                } else {
+                    System.out.println("Esperado um identificador após 'program'");
+                    System.out.print(tokens.get(currentTokenIndex).getLine() + " " + tokens.get(currentTokenIndex).getToken());
+                }
+            } else {
+                System.out.println("Esperada a palavra-chave 'program'");
+                System.out.print(tokens.get(currentTokenIndex).getLine() + " " + tokens.get(currentTokenIndex).getToken());
             }
         }
-        return false;
-    }
-
-    private void error(String message) {
-        System.err.println("Erro de sintaxe na linha " + tokens.get(currentTokenIndex).getLine() +
-                ", coluna " + tokens.get(currentTokenIndex).getColumn() + ": " + message);
-        System.exit(1);
-    }
-
-    private void programa() {
-        if (!match(TokenType.PROGRAMA, null)) {
-            error("Esperado 'program'");
-        }
-        if (!match(TokenType.IDENTIFICADOR, null)) {
-            error("Esperado identificador");
-        }
-        if (!match(TokenType.DELIMITADOR, ";")) {
-            error("Esperado ';'");
-        }
-        declaracoes_variaveis();
-        declaracoes_de_subprogramas();
-        comando_composto();
     }
 
     private void declaracoes_variaveis() {
-        if (match(TokenType.VARIAVEL, null)) {
+        if (tokens.get(currentTokenIndex).getToken().equals("var")) {
+            currentTokenIndex++;
             lista_declaracoes_variaveis();
         }
     }
 
     private void lista_declaracoes_variaveis() {
-        do {
+        if (tokens.get(currentTokenIndex).getClassification().equals("IDENTIFIER")) {
             lista_de_identificadores();
-            if (!match(TokenType.DELIMITADOR, ":")) {
-                error("Esperado ':'");
+            if (tokens.get(currentTokenIndex).getToken().equals(":")) {
+                currentTokenIndex++;
+                tipo();
+                if (tokens.get(currentTokenIndex).getToken().equals(";")) {
+                    currentTokenIndex++;
+                    lista_declaracoes_variaveis();
+                } else {
+                    System.out.println("Esperado ';' após o tipo");
+                }
+            } else {
+                System.out.println("Esperado um tipo após os ':'");
             }
-            tipo();
-            if (!match(TokenType.DELIMITADOR, ";")) {
-                error("Esperado ';'");
-            }
-        } while (match(TokenType.IDENTIFICADOR, null));
+        }
     }
 
     private void lista_de_identificadores() {
         do {
-            if (!match(TokenType.IDENTIFICADOR, null)) {
-                error("Esperado identificador");
+            if (tokens.get(currentTokenIndex).getClassification().equals("IDENTIFIER")) {
+                currentTokenIndex++;
+                if (tokens.get(currentTokenIndex).getToken().equals(",")) {
+                    currentTokenIndex++;
+                } else {
+                    break;
+                }
+            } else {
+                System.out.println("Esperado um identificador");
             }
-        } while (match(TokenType.DELIMITADOR, ","));
-    }
-
-    private void tipo() {
-        if (!match(TokenType.INTEIRO, null) && !match(TokenType.DECIMAL, null) &&
-                !match(TokenType.BOOLEAN, null)) {
-            error("Esperado tipo (integer, real ou boolean)");
-        }
+        } while (true);
     }
 
     private void declaracoes_de_subprogramas() {
-        while (match(TokenType.PROCEDIMENTO, null)) {
-            if (!match(TokenType.IDENTIFICADOR, null)) {
-                error("Esperado identificador");
+
+        if (tokens.get(currentTokenIndex).getToken().equals("procedure")) {
+            declaracao_de_subprograma();
+        }
+    }
+
+    private void declaracao_de_subprograma() {
+        if (tokens.get(currentTokenIndex).getToken().equals("procedure")) {
+            currentTokenIndex++;
+            if (tokens.get(currentTokenIndex).getClassification().equals("IDENTIFIER")) {
+                currentTokenIndex++;
+                argumentos();
+                if (tokens.get(currentTokenIndex).getToken().equals(";")) {
+                    currentTokenIndex++;
+                    declaracoes_variaveis();
+                    declaracoes_de_subprogramas();
+                    comando_composto();
+                } else {
+                    System.out.println("Esperado ';' após declaração de subprograma");
+                }
+            } else {
+                System.out.println("Esperado identificador após 'procedure'");
             }
-            argumentos();
-            declaracoes_variaveis();
-            declaracoes_de_subprogramas();
-            comando_composto();
+        } else {
+            System.out.println("Esperada a palavra-chave 'procedure'");
         }
     }
 
     private void argumentos() {
-        if (match(TokenType.DELIMITADOR, "(")) {
+        if (tokens.get(currentTokenIndex).getToken().equals("(")) {
+            currentTokenIndex++;
             lista_de_parametros();
-            if (!match(TokenType.DELIMITADOR, ")")) {
-                error("Esperado ')'");
+            if (tokens.get(currentTokenIndex).getToken().equals(")")) {
+                currentTokenIndex++;
+            } else {
+                System.out.println("Esperado ')' após lista de parâmetros");
             }
+        } else {
+            System.out.println("Esperado '(' após 'procedure'");
         }
     }
 
     private void lista_de_parametros() {
-        if (match(TokenType.DELIMITADOR, "(")) {
-            lista_de_identificadores();
-            if (!match(TokenType.DELIMITADOR, ":")) {
-                error("Esperado ':'");
-            }
+        lista_de_identificadores();
+        if (tokens.get(currentTokenIndex).getToken().equals(":")) {
+            currentTokenIndex++;
             tipo();
-            while (match(TokenType.DELIMITADOR, ";")) {
+            while (tokens.get(currentTokenIndex).getToken().equals(",")) {
+                currentTokenIndex++;
                 lista_de_identificadores();
-                if (!match(TokenType.DELIMITADOR, ":")) {
-                    error("Esperado ':'");
+                if (tokens.get(currentTokenIndex).getToken().equals(":")) {
+                    currentTokenIndex++;
+                    tipo();
+                } else {
+                    System.out.println("Esperado ':' após lista de identificadores");
                 }
-                tipo();
             }
-            if (!match(TokenType.DELIMITADOR, ")")) {
-                error("Esperado ')'");
-            }
+        } else {
+            System.out.println("Esperado ':' após lista de identificadores");
+        }
+    }
+
+    private void tipo() {
+        if (tokens.get(currentTokenIndex).getToken().equals("integer") ||
+                tokens.get(currentTokenIndex).getToken().equals("real") ||
+                tokens.get(currentTokenIndex).getToken().equals("boolean")) {
+            currentTokenIndex++;
+        } else {
+            System.out.println("Esperado um tipo (integer, real, boolean)");
         }
     }
 
     private void comando_composto() {
-        if (!match(TokenType.INICIO, null)) {
-            error("Esperado 'begin'");
-        }
-        comandos_opcionais();
-        if (!match(TokenType.FIM, null)) {
-            error("Esperado 'end'");
+        if (tokens.get(currentTokenIndex).getToken().equals("begin")) {
+            currentTokenIndex++;
+            comandos_opcionais();
+            if (tokens.get(currentTokenIndex).getToken().equals("end")) {
+                currentTokenIndex++;
+            } else {
+                System.out.println("Esperado 'end' após comandos opcionais");
+            }
+        } else {
+            System.out.println("Esperado 'begin' para iniciar o comando composto");
         }
     }
 
     private void comandos_opcionais() {
-        while (!match(TokenType.DELIMITADOR, ".") && !match(TokenType.ERROR, null)) {
-            if (match(TokenType.COMENTARIO, null)) {
-                consume();
-            } else {
-                lista_de_comandos();
-            }
-        }
+        lista_de_comandos();
     }
 
     private void lista_de_comandos() {
-        do {
-            comando();
-        } while (match(TokenType.DELIMITADOR, ";"));
+        comando();
+        while (tokens.get(currentTokenIndex).getToken().equals(";")) {
+            currentTokenIndex++;
+            if (tokens.get(currentTokenIndex).getToken().equals("end")) {
+                break;
+            } else {
+                comando();
+            }
+
+        }
     }
 
     private void comando() {
-        if (match(TokenType.IDENTIFICADOR, null)) {
-            if (match(TokenType.ATRIBUICAO, ":=")) {
+        if (tokens.get(currentTokenIndex).getClassification().equals("IDENTIFIER")) {
+            currentTokenIndex++;
+            if (tokens.get(currentTokenIndex).getToken().equals(":=")) {
+                currentTokenIndex++;
                 expressao();
-            } else if (match(TokenType.DELIMITADOR, "(")) {
-                lista_de_expressoes();
-                if (!match(TokenType.DELIMITADOR, ")")) {
-                    error("Esperado ')'");
-                }
+            }
+        } else if (tokens.get(currentTokenIndex).getToken().equals("if")) {
+            currentTokenIndex++;
+            expressao();
+            if (tokens.get(currentTokenIndex).getToken().equals("then")) {
+                currentTokenIndex++;
+                comando();
             } else {
-                error("Comando inválido");
+                System.out.println("Esperado 'then' após expressão do if");
             }
-        } else if (match(TokenType.PROCEDIMENTO, null)) {
-            if (!match(TokenType.IDENTIFICADOR, null)) {
-                error("Esperado identificador");
-            }
-            if (match(TokenType.DELIMITADOR, "(")) {
-                lista_de_expressoes();
-                if (!match(TokenType.DELIMITADOR, ")")) {
-                    error("Esperado ')'");
-                }
-            }
-        } else if (match(TokenType.INICIO, null)) {
-            comando_composto();
-        } else if (match(TokenType.IF, null)) {
-            expressao();
-            if (!match(TokenType.THEN, null)) {
-                error("Esperado 'then'");
-            }
-            comando();
+        } else if (tokens.get(currentTokenIndex).getToken().equals("else")) {
             parte_else();
-        } else if (match(TokenType.WHILE, null)) {
+
+        } else if (tokens.get(currentTokenIndex).getToken().equals("while")) {
+            currentTokenIndex++;
             expressao();
-            if (!match(TokenType.DO, null)) {
-                error("Esperado 'do'");
+            if (tokens.get(currentTokenIndex).getToken().equals("do")) {
+                currentTokenIndex++;
+                comando();
+            } else {
+                System.out.println("Esperado 'do' após expressão do while");
             }
-            comando();
-        } else if (match(TokenType.FOR, null)) {
-            if (!match(TokenType.IDENTIFICADOR, null)) {
-                error("Esperado identificador após 'for'");
-            }
-            if (!match(TokenType.ATRIBUICAO, ":=")) {
-                error("Esperado ':=' após identificador no comando 'for'");
-            }
-            expressao();
-            if (!match(TokenType.TO, null)) {
-                error("Esperado 'to' após expressão no comando 'for'");
-            }
-            expressao();
-            if (!match(TokenType.DO, null)) {
-                error("Esperado 'do' após expressão 'to' no comando 'for'");
-            }
+
+        } else if (tokens.get(currentTokenIndex).getToken().equals("begin")) {
             comando_composto();
         } else {
-            error("Comando inválido");
+            System.out.print(tokens.get(currentTokenIndex).getLine() + " token: " + tokens.get(currentTokenIndex).getToken() + "\n");
+            System.out.println("Comando inválido");
         }
     }
 
     private void parte_else() {
-        if (match(TokenType.ELSE, null)) {
+        if (tokens.get(currentTokenIndex).getToken().equals("else")) {
+            currentTokenIndex++;
             comando();
         }
     }
 
+
     private void expressao() {
         expressao_simples();
-        if (match(TokenType.IGUAL, null) || match(TokenType.MENOR, null) ||
-                match(TokenType.MAIOR, null) || match(TokenType.MENOR_OU_IGUAL, null) ||
-                match(TokenType.MAIOR_OU_IGUAL, null) || match(TokenType.DIFERENTE, null)) {
-            match(TokenType.SOMA, null);
-            match(TokenType.MENOS, null);
-            match(TokenType.OR, null);
+        if (tokens.get(currentTokenIndex).getToken().equals("=") ||
+                tokens.get(currentTokenIndex).getToken().equals("<") ||
+                tokens.get(currentTokenIndex).getToken().equals(">") ||
+                tokens.get(currentTokenIndex).getToken().equals("<=") ||
+                tokens.get(currentTokenIndex).getToken().equals(">=") ||
+                tokens.get(currentTokenIndex).getToken().equals("<>")) {
+            currentTokenIndex++;
             expressao_simples();
         }
     }
 
-
     private void expressao_simples() {
         termo();
-        while (match(TokenType.SOMA, null) || match(TokenType.MENOS, null) ||
-                match(TokenType.OR, null)) {
+        while (tokens.get(currentTokenIndex).getToken().equals("+") ||
+                tokens.get(currentTokenIndex).getToken().equals("-") ||
+                tokens.get(currentTokenIndex).getToken().equals("or")) {
+            currentTokenIndex++;
             termo();
+        }
+    }
+    private void sinal(){
+        if (tokens.get(currentTokenIndex).getToken().equals("-")||tokens.get(currentTokenIndex).getToken().equals("+")){
+            currentTokenIndex++;
         }
     }
 
     private void termo() {
         fator();
-        while (match(TokenType.MULTIPLICACAO, null) || match(TokenType.DIVISAO, null) || match(TokenType.AND, null)) {
+        while (tokens.get(currentTokenIndex).getToken().equals("*") ||
+                tokens.get(currentTokenIndex).getToken().equals("/") ||
+                tokens.get(currentTokenIndex).getToken().equals("and")) {
+            currentTokenIndex++;
             fator();
         }
     }
 
     private void fator() {
-        if (match(TokenType.IDENTIFICADOR, null)) {
-            if (match(TokenType.DELIMITADOR, "(")) {
-                lista_de_expressoes();
-                if (!match(TokenType.DELIMITADOR, ")")) {
-                    error("Esperado ')'");
-                }
-            }
-        } else if (!match(TokenType.INTEIRO, null) && !match(TokenType.DECIMAL, null) && !match(TokenType.BOOLEAN, null) &&
-                !match(TokenType.TRUE, null) && !match(TokenType.FALSE, null) && !match(TokenType.DELIMITADOR, "(") &&
-                !match(TokenType.NOT, null)) {
-            error("Fator inválido");
-        }
-    }
+        sinal();
+        if (tokens.get(currentTokenIndex).getClassification().equals("IDENTIFIER") ||
+                tokens.get(currentTokenIndex).getClassification().equals("INTEGER") ||
+                tokens.get(currentTokenIndex).getClassification().equals("REAL") ||
+                tokens.get(currentTokenIndex).getToken().equals("true") ||
+                tokens.get(currentTokenIndex).getToken().equals("false")) {
 
-    private void lista_de_expressoes() {
-        expressao();
-        while (match(TokenType.DELIMITADOR, ",")) {
+            currentTokenIndex++;
+        } else if (tokens.get(currentTokenIndex).getToken().equals("(")) {
+            currentTokenIndex++;
             expressao();
+            if (tokens.get(currentTokenIndex).getToken().equals(")")) {
+                currentTokenIndex++;
+            } else {
+                System.out.println("Esperado ')' após expressão");
+            }
+        } else if (tokens.get(currentTokenIndex).getToken().equals("not")) {
+            currentTokenIndex++;
+            fator();
+        }
+        else {
+            System.out.println("esse token esta dando erro: " + tokens.get(currentTokenIndex).getToken() + " | linha " + tokens.get(currentTokenIndex).getLine());
+            System.out.println("Fator inválido");
         }
     }
 }

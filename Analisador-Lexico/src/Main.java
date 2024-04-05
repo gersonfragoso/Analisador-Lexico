@@ -1,12 +1,12 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
         try {
-            String filePath = "src/gramatica.txt";
+            String filePath = "src/arquivosTeste/Test3.txt";
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             StringBuilder input = new StringBuilder();
             String line;
@@ -15,22 +15,22 @@ public class Main {
             }
             reader.close();
 
-            Lexer lexer = new Lexer(input.toString());
-            ArrayList<Token> tokens = lexer.tokenize();
-
-            // Exibir os tokens em formato de tabela
+            // Realiza a análise léxica
+            Lexer lexer = new Lexer();
+            List<Token> tokens = lexer.match(String.valueOf(input));
+            // Exibe os tokens em formato de tabela
             System.out.println("\nTokens:");
             System.out.println(String.format("%-20s %-20s %-10s", "Token", "Tipo", "Linha"));
-            System.out.println("".repeat(50)); // Linha horizontal
+            System.out.println("".repeat(50));
             for (Token token : tokens) {
                 System.out.println(String.format("%-20s %-20s %-10s",
-                        token.getValue(), token.getType(), token.getLine()));
+                        token.getToken(), token.getClassification(), token.getLine()));
             }
 
+            // Realiza a análise sintática
             Parser parser = new Parser(tokens);
-            parser.parse();
+            parser.programa();
 
-            System.out.println("\nAnálise sintática concluída com sucesso.");
 
         } catch (IOException e) {
             System.err.println("Erro ao ler o arquivo: " + e.getMessage());
