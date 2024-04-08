@@ -6,7 +6,7 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         try {
-            String filePath = "src/arquivosTeste/Test3.txt";
+            String filePath = "src/ArquivosTestes/Teste5.txt";
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             StringBuilder input = new StringBuilder();
             String line;
@@ -30,7 +30,6 @@ public class Main {
             // Realiza a análise sintática
             Parser parser = new Parser(tokens);
             parser.programa();
-
 
         } catch (IOException e) {
             System.err.println("Erro ao ler o arquivo: " + e.getMessage());

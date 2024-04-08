@@ -1,11 +1,17 @@
 program Test1;
    var
       Area, Comprimento, Raio : real;
+      Are, Compriment, Rai : integer;
+      x,y,z:boolean;
+
  begin   {essa linha deve gerar um erro devido ao caracter não conhecido}
       Raio := 4;
-      Area := 3.14 * Raio * Raio;
+      Area := 3.14 * Raio * Raio+4;
       Comprimento := 2 * 3.14 * Raio;
-end.
+
+
+
+ end.
 
 {testar multiplos espacos também}
 {gere erros sintáticos, como retirar uma atribuição}

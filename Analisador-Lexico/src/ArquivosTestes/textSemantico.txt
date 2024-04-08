@@ -1,0 +1,24 @@
+program test1;
+
+var	{Aqui vamos fazer as declarações de varias basta apenas repetir alguma que o erro sera identificada}
+  a,b,c: integer;
+  x,y,z: real;		{Declare novamente a variável "a" como real para que gere um erro "variável já declarada"}
+  chave: boolean;
+  procedure Somatorio(entrada:integer); {Entratando aqui como ja é outro escopo não da mais errado}
+  var
+     resultado: integer;    {Aqui caso o nome seja igual ao do Somatoria é para de erro}
+  begin
+     resultado := 0;
+     while (entrada>0) do
+        resultado := resultado + entrada;
+        entrada := entrada - 1	{troque "1" por "chave" e veja se gera o erro "tipos incompatíveis"}
+  end
+
+begin
+   x:= z * y +(2.5)/5.0; {não é pra da erro}
+   a:=x+b; {aqui é pra da erro}
+   if chave then
+      if x <> z then
+         z := 5.0
+      else chave := not chave;
+end.

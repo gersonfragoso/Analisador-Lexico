@@ -1,0 +1,9 @@
+program Test1;
+   var
+      Area, Comprimento, Raio : real;
+      TESTE:boolean;
+
+   begin
+          Area :=  Raio * Raio;
+          TESTE:= true;
+end.
