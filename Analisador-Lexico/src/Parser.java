@@ -69,66 +69,38 @@ public class Parser {
             System.out.println(entry.getKey() + "=" + entry.getValue());
         }
     }
+    /*
     public void verificar (List<String>operacao){
-        operacao.add("mark");
-        operacao.remove(0);
-        List<String> verificaAtual = new ArrayList<>();
+        int inicio = operacao.size()-1;
+        Stack<String>resolve = new Stack<>();
+        List<String> fila = new ArrayList<>();
         while (true){
-            for (int i = 0; !Objects.equals(operacao.get(i), "mark"); i++){
-                String atual = operacao.get(i);
-                if (tiposVar.containsKey(atual)){
-                    for (Map.Entry<String, String> entry : tiposVar.entrySet()) {
-                        if (atual.equals(entry.getKey())) {
-                            verificaAtual.add(entry.getValue());
-                            operacao.remove(i);
-                            System.out.println(operacao);
-                            System.out.println(verificaAtual);
-                        }
+            if (operacao.get(inicio)!="mark"){
+                if(operacao.get(inicio).equals(":=")){
+                    operacao.remove(inicio);
+                    inicio--;
+                }else {
+                    resolve.add(operacao.get(inicio));
+                    operacao.remove(inicio);
+                    inicio--;
+                }
+            } else if (operacao.get(inicio)=="mark") {
+                int verificarTipo = resolve.size()-1;
+                for (String key:tiposVar.keySet()){
+                    if (resolve.get(verificarTipo) == key){
+                        System.out.println(key);
+                        String valor = tiposVar.get(key);
+                        fila.add(valor);
                     }
-                } else if (atual.equals(":=")) {
-                    operacao.remove(i);
-                }else if (atual.equals("*")){
-                    operacao.remove(i);
-                }
-                if (atual.equals("mark")){
-                    if (verificaAtual.get(0).equals("real")){
-                        for (int j = 1; j < verificaAtual.size(); j++){
-                            if (verificaAtual.get(i).equals("boolean"))   {
-                                System.out.println("Erro variavel boolean declarada em lugar errado");
-                            }else {
-                                System.out.println("Ok");
-                            }
-                        }
-                    }else if (verificaAtual.get(0).equals("integer")) {
-                        for (int j = 1; j < verificaAtual.size(); j++) {
-                            if (verificaAtual.get(i).equals("boolean") || verificaAtual.get(i).equals("real")) {
-                                System.out.println("Erro variavel boolean|real declarada em lugar errado");
-                            } else {
-                                System.out.println("Ok");
-                            }
-                        }
-                    } else if (verificaAtual.get(0).equals("boolean")) {
-                        for (int j = 1; j < verificaAtual.size(); j++) {
-                            if (verificaAtual.get(i).equals("integer") || verificaAtual.get(i).equals("real")) {
-                                System.out.println("Erro variavel real|integer declarada em lugar errado");
-                            } else {
-                                System.out.println("Ok");
-                            }
-                        }
 
-                    }else if (operacao.get(i) == "mark"){
-                       operacao.remove(i);
-                    }
                 }
-                if (operacao.isEmpty()){
-                    break;
-                }
-
+                System.out.println(fila);
 
             }
-
         }
     }
+
+     */
 
     public void programa() {
         if (currentTokenIndex < tokens.size()) {
@@ -334,7 +306,12 @@ public class Parser {
                 operacao.add(tokens.get(currentTokenIndex).getToken());
                 currentTokenIndex++;
                 expressao();
+            }else if(tokens.get(currentTokenIndex).getToken().equals("(")){
+                ativacao_procedimento();
             }
+
+        } else if (tokens.get(currentTokenIndex).getToken().equals("procedure")) {
+            declaracoes_de_subprogramas();
         } else if (tokens.get(currentTokenIndex).getToken().equals("if")) {
             operacao.add("mark");
             currentTokenIndex++;
@@ -373,6 +350,30 @@ public class Parser {
         if (tokens.get(currentTokenIndex).getToken().equals("else")) {
             currentTokenIndex++;
             comando();
+        }
+    }
+
+    public void ativacao_procedimento() {
+        if (tokens.get(currentTokenIndex).getToken().equals("(")) {
+            currentTokenIndex++;
+            if (tokens.get(currentTokenIndex).getToken().equals(")")){
+                currentTokenIndex++;
+            }else {
+                lista_de_expressao();
+                if (tokens.get(currentTokenIndex).getToken().equals(")")) {
+                    currentTokenIndex++;
+                }else {
+                    System.out.println("Esperado ')' após lista de expressões na ativação de procedimento");
+                }
+            }
+        }
+    }
+
+    public void lista_de_expressao() {
+        expressao();
+        while (tokens.get(currentTokenIndex).getToken().equals(",")) {
+            currentTokenIndex++;
+            expressao();
         }
     }
 

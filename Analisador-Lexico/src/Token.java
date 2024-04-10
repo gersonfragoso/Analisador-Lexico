@@ -2,7 +2,7 @@ import java.util.regex.Matcher;
 
 public class Token {
     private final String token;
-    private final String classification;
+    private String classification;
     private final int line;
 
     public Token(String token, String classification, int line) {
@@ -17,6 +17,10 @@ public class Token {
 
     public String getClassification() {
         return this.classification;
+    }
+
+    public void setClassification(String novaClassificação){
+        this.classification = novaClassificação;
     }
 
     public int getLine() {

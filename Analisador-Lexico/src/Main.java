@@ -6,7 +6,7 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         try {
-            String filePath = "src/ArquivosTestes/Teste5.txt";
+            String filePath = "src/ArquivosTestes/textSemantico.txt";
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             StringBuilder input = new StringBuilder();
             String line;
